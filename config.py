@@ -1,0 +1,6 @@
+# Location
+LOCATION = "New York"
+
+# Dates (MM/DD/YYYY)
+CHECK_IN_DATE = "02-19-2025"
+CHECK_OUT_DATE = "02-21-2025"
