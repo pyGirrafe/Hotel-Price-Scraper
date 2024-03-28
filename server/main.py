@@ -5,8 +5,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import NoSuchElementException
+
 from openpyxl import Workbook
-from config import *
+# from config import *
 import datetime
 import time
 
@@ -18,11 +19,12 @@ def scrape_hotel_prices(location, check_in_date, check_out_date):
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     driver = webdriver.Chrome(options=options)
     driver.get(website)
+    driver.maximize_window()
 
     try:
 
         # Open Location Search
-        location_button = driver.find_element(By.CLASS_NAME, 'button[aria-label="Where to"]')
+        location_button = driver.find_element(By.CLASS_NAME, 'uitk-form-field-trigger')
         location_button.click()
 
         # Search Location
@@ -56,28 +58,25 @@ def scrape_hotel_prices(location, check_in_date, check_out_date):
                 pass
 
         # Select Dates
-        check_in_date_formatted = check_in_date.strftime("%A, %B %d, %Y")
-        check_out_date_formatted = check_out_date.strftime("%A, %B %d, %Y")
+        check_in_date_formatted = check_in_date.strftime("%A %d %B %Y")
+        check_out_date_formatted = check_out_date.strftime("%A %d %B %Y")
 
         while True:    
-            selected_dates = 0        
+            selected_dates = 0
+            if selected_dates == 2:
+                break
             try:
                 date_buttons = driver.find_elements(By.XPATH, "//td[@class='uitk-day']/div[@class='uitk-day-button uitk-day-selectable uitk-day-clickable']")
                 for button in date_buttons:
                     label = button.find_element(By.XPATH, ".//div[@class='uitk-day-aria-label']")
                     aria_label = label.get_attribute("aria-label")
-                    if aria_label == "Wednesday 3 April 2024" or aria_label == "Friday 5 April 2024":
+                    if aria_label == check_in_date_formatted or aria_label == check_out_date_formatted:
                         button.click()
                         selected_dates += 1
-
                 if selected_dates == 2:
-                    done_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[@data-stid='apply-date-selector']")))
-                    done_button.click()
                     break
-
             except StaleElementReferenceException:
                 pass
-
         
         # Search
         search_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "search_button")))
@@ -123,8 +122,8 @@ def scrape_hotel_prices(location, check_in_date, check_out_date):
 
         # Output hotel data
         print(len(hotel_data))
-        for hotel in hotel_data:
-            print(hotel)
+        # for hotel in hotel_data:
+        #     print(hotel)
 
         # Write Hotel Data to Excel
         wb = Workbook()
@@ -134,7 +133,9 @@ def scrape_hotel_prices(location, check_in_date, check_out_date):
         for hotel in hotel_data:
             ws.append([hotel["Hotel Name"], hotel["Location"], hotel["Price"], hotel["Rating"], hotel["URL"]])
 
-        wb.save("hotel_data.xlsx")
+        wb.save("../hotel_data.xlsx")
+        
+        return hotel_data
 
     except Exception as e:
         print(f"Error: {e}")
@@ -142,5 +143,5 @@ def scrape_hotel_prices(location, check_in_date, check_out_date):
     finally:
         driver.quit()
 
-if __name__ == "__main__":
-    scrape_hotel_prices(LOCATION, CHECK_IN_DATE, CHECK_OUT_DATE)
+# if __name__ == "__main__":
+#     scrape_hotel_prices(LOCATION, CHECK_IN_DATE, CHECK_OUT_DATE)
